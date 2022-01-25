@@ -1,18 +1,21 @@
-declare_PID_Component(
-    SHARED_LIB
-    NAME eigen-cdd
-    DIRECTORY eigen-cdd
-    CXX_STANDARD 11
-)
+add_library(${PROJECT_NAME} SHARED Polyhedron.cpp)
+if(TARGET Eigen3::Eigen)
+  target_link_libraries(${PROJECT_NAME} PUBLIC Eigen3::Eigen)
+else()
+  target_include_directories(${PROJECT_NAME} PUBLIC "${EIGEN3_INCLUDE_DIR}")
+endif()
+target_link_libraries(${PROJECT_NAME} PUBLIC eigen-cdd::CDD)
+target_include_directories(${PROJECT_NAME} PUBLIC $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
 
-declare_PID_Component_Dependency(
-    COMPONENT eigen-cdd
-    EXPORT EXTERNAL eigen
-    INCLUDE_DIRS <eigen>/include
-)
-
-declare_PID_Component_Dependency(
-    COMPONENT eigen-cdd
-    EXPORT NATIVE cdd
-    PACKAGE cdd
-)
+install(FILES
+  "${PROJECT_SOURCE_DIR}/include/eigen-cdd/Polyhedron.h"
+  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+install(TARGETS ${PROJECT_NAME}
+  EXPORT ${PROJECT_NAME}Targets
+  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+install(EXPORT ${PROJECT_NAME}Targets
+  FILE ${PROJECT_NAME}Targets.cmake
+  NAMESPACE ${PROJECT_NAME}::
+  DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME})

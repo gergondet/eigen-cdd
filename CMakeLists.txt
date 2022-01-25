@@ -1,31 +1,33 @@
-CMAKE_MINIMUM_REQUIRED(VERSION 3.0.2)
-set(WORKSPACE_DIR ${CMAKE_SOURCE_DIR}/../.. CACHE PATH "root of the packages workspace directory")
-list(APPEND CMAKE_MODULE_PATH ${WORKSPACE_DIR}/share/cmake/system) # using generic scripts/modules of the workspace
-include(Package_Definition NO_POLICY_SCOPE)
+cmake_minimum_required(VERSION 3.6)
 
-PROJECT(eigen-cdd)
+set(CMAKE_CXX_STANDARD 11)
 
-declare_PID_Package(	
-			AUTHOR 			Vincent Samy
-			ADDRESS 		git@github.com:vsamy/eigen-cdd.git
-			PUBLIC_ADDRESS	https://github.com/vsamy/eigen-cdd.git
-			YEAR 			2017 
-			INSTITUTION		LIRMM
-			MAIL			vsamy@outlook.fr
-			YEAR 			2017 
-			LICENSE 		CeCILL-C
-			DESCRIPTION 	"Small Eigen Wrapper of cdd. Based on Fukuda's library named [cdd](https://www.inf.ethz.ch/personal/fukudak/cdd_home)"
-)
+project(eigen-cdd LANGUAGES CXX VERSION 0.4.3)
+include(CTest)
 
-set_PID_Package_Version(0 4 3)
-
-#now finding packages
-declare_PID_Package_Dependency(PACKAGE eigen EXTERNAL VERSION 3.3.4)
-declare_PID_Package_Dependency(PACKAGE cdd NATIVE VERSION 0.94)
-
-if(BUILD_AND_RUN_TESTS)
-	declare_PID_Package_Dependency(PACKAGE boost EXTERNAL VERSION 1.64.0)
+if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
+  message(STATUS "Setting default build type to RelWithDebInfo as none was provided")
+  set(CMAKE_BUILD_TYPE "RelWithDebInfo" CACHE STRING "Choose the type of a build" FORCE)
 endif()
 
-build_PID_Package()
+# Find CDD
+if(NOT DEFINED CDD_PREFIX)
+  set(CDD_PREFIX ${CMAKE_INSTALL_PREFIX})
+endif()
+include(cmake/CDD.cmake)
 
+# Find Eigen
+find_package(Eigen3 QUIET NO_CMAKE_PACKAGE_REGISTRY)
+if(Eigen3_FOUND)
+  set(EIGEN_DEPENDENCY "find_package(Eigen3 REQUIRED NO_CMAKE_PACKAGE_REGISTRY)")
+else()
+  set(EIGEN_DEPENDENCY "find_package(Eigen3 MODULE REQUIRED)")
+  find_package(Eigen3 MODULE REQUIRED)
+endif()
+
+add_subdirectory(cmake)
+add_subdirectory(src)
+
+if(BUILD_TESTING)
+  add_subdirectory(tests)
+endif()
